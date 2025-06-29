@@ -104,7 +104,7 @@ if 'current_table_name' not in st.session_state:
 # All projects will use the SAME 'db_alias' (e.g., "supabase_db")
 # but will specify DIFFERENT 'table_name' values.
 VALID_PROJECT_CODES = {
-    "FITBASE101": {"name": "Fit-Base Validation", "module": "fit_base", "db_alias": "supabase_db", "table_name": "fitbase"},
+    "FIT101": {"name": "Fit-Base Validation", "module": "fit_base", "db_alias": "supabase_db", "table_name": "fitbase"},
     "CUSTOMER202": {"name": "Customer Analytics Dashboard", "module": "customer_dashboard", "db_alias": "supabase_db", "table_name": "customerdashboard"},
     "NFT301": {"name": "NFT Marketplace Insights", "module": "nft_marketplace", "db_alias": "supabase_db", "table_name": "nftmarketplace"},
     "FLOW401": {"name": "Project Flow Platform", "module": "project_flow", "db_alias": "supabase_db", "table_name": "projectflow"},
@@ -120,7 +120,7 @@ if st.session_state.page == "code_input":
 
     project_code_input = st.text_input(
         "Project Code:",
-        placeholder="e.g., FITBASE101",
+        placeholder="e.g., FIT101, CUSTOMER202, NFT301, FLOW401",
         key="project_code_field"
     ).strip().upper()
 
