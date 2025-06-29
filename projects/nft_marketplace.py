@@ -2,25 +2,21 @@
 
 def get_questions():
     return [
-        {
+        {   
             "id": "nft_q1",
             "type": "radio",
-            "text": "What type of NFT marketplace features are most important to you?",
-            "options": ["Buying/Selling", "Minting", "Community", "Analytics"],
-            "key_suffix": "nft_feature_priority",
-            "section": "NFT Marketplace Features"
+            "text": "We are currently developing the idea for NFT Marketplace. Would you like to contribute your ideas? ",
+            "options": ["Yes! Sounds fun", "Not Interested"],
+            "key_suffix": "nft_header_custom",
+            "section": "NFT Marketplace Custom"
         },
         {
             "id": "nft_q2",
             "type": "text_area",
-            "text": "Describe your ideal user experience for browsing NFTs:",
-            "placeholder": "e.g., Filters, sorting, visual previews...",
-            "key_suffix": "nft_browsing_experience",
-            "section": "NFT Marketplace Features",
-            "condition": {
-                "depends_on": "nft_feature_priority",
-                "type": "any_value"
-            }
+            "text": "Share your feedback / ideas / comments:",
+            "placeholder": "e.g., types of NFT, opinions, current experience, etc...",
+            "key_suffix": "nft_marketplace_feedback",
+            "section": "NFT Marketplace Custom"
         },
         # ... more questions specific to NFT marketplace ...
     ]

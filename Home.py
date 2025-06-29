@@ -46,7 +46,7 @@ def save_response_to_supabase(data_to_save, db_alias, table_name):
     """
     try:
         # Establish connection dynamically based on db_alias
-        # This will connect to the single database defined by 'supabase_db' alias
+        # This will connect to the single database defined by 'main_project_db' alias
         conn = st.connection(db_alias, type="sql") 
         with conn.session as session:
             insertion_data = {
@@ -77,9 +77,8 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-st.title("💡 Idea Validation System")
 st.markdown("""
-## Welcome to the Idea Validation System
+# Welcome to the Idea Validation System
 ### Your insights will help innovators validate features & products.
 """)
 st.markdown("---")
@@ -101,7 +100,7 @@ if 'current_table_name' not in st.session_state:
     st.session_state.current_table_name = None
 
 # --- Configuration for Project Codes (mapping to project modules and DB tables) ---
-# All projects will use the SAME 'db_alias' (e.g., "supabase_db")
+# All projects will use the SAME 'db_alias' (e.g., "main_project_db")
 # but will specify DIFFERENT 'table_name' values.
 VALID_PROJECT_CODES = {
     "FIT101": {"name": "Fit-Base Validation", "module": "fit_base", "db_alias": "supabase_db", "table_name": "fitbase"},
@@ -129,7 +128,7 @@ if st.session_state.page == "code_input":
             project_info = VALID_PROJECT_CODES[project_code_input]
             st.session_state.project_code_current = project_code_input
             st.session_state.project_name_current = project_info["name"]
-            st.session_state.current_db_alias = project_info["db_alias"] # Store DB alias (will be "supabase_db")
+            st.session_state.current_db_alias = project_info["db_alias"] # Store DB alias (will be "main_project_db")
             st.session_state.current_table_name = project_info["table_name"] # Store specific table name
 
             # Load the specific project
@@ -169,14 +168,15 @@ elif st.session_state.page == "survey_questions":
         for q_data in questions:
             question_id = q_data["id"]
             question_text = q_data["text"]
-            key_suffix = q_data["key_suffix"]
-            widget_key = f"{question_id}_{key_suffix}" # Unique key for Streamlit widget
+            key_suffix = q_data.get("key_suffix") # Use .get() as markdown type might not need it
+            widget_key = f"{question_id}_{key_suffix}" if key_suffix else question_id # Unique key for Streamlit widget
 
             # Check conditional logic
             condition = q_data.get("condition")
             display_question = True
             if condition:
                 # Use key_suffix for previous response lookup
+                # Make sure depends_on is a key_suffix that exists in survey_data_collected
                 previous_response = st.session_state.survey_data_collected.get(condition["depends_on"])
                 
                 if condition["type"] == "equals":
@@ -190,7 +190,16 @@ elif st.session_state.page == "survey_questions":
                         display_question = False
             
             if display_question:
-                # Retrieve current value from session_state for persistent display
+                # Handle markdown type separately as it's for display, not input
+                if q_data["type"] == "markdown":
+                    st.markdown(question_text)
+                    # No response to store for markdown type
+                    # Ensure no old response for this markdown ID is retained if it was from a different type
+                    if key_suffix in st.session_state.survey_data_collected:
+                        del st.session_state.survey_data_collected[key_suffix]
+                    continue # Skip to the next question in the loop
+
+                # For interactive elements, retrieve current value for persistence
                 current_value = st.session_state.survey_data_collected.get(key_suffix)
                 if current_value is None: # Use default if not already in session_state
                     if q_data["type"] == "slider":
@@ -202,7 +211,6 @@ elif st.session_state.page == "survey_questions":
 
 
                 if q_data["type"] == "radio":
-                    # Determine index for radio button if a value is already selected
                     selected_index = None
                     if current_value in q_data["options"]:
                         selected_index = q_data["options"].index(current_value)
@@ -210,7 +218,7 @@ elif st.session_state.page == "survey_questions":
                     response = st.radio(
                         question_text,
                         options=q_data["options"],
-                        index=selected_index, # Set initial selected index
+                        index=selected_index,
                         key=widget_key
                     )
                 elif q_data["type"] == "text_area":
@@ -221,8 +229,7 @@ elif st.session_state.page == "survey_questions":
                         key=widget_key
                     )
                 elif q_data["type"] == "selectbox":
-                    # Determine index for selectbox
-                    selected_index = q_data.get("default_value", 0) # Default index
+                    selected_index = q_data.get("default_value", 0)
                     if current_value in q_data["options"]:
                         selected_index = q_data["options"].index(current_value)
                     
@@ -241,11 +248,12 @@ elif st.session_state.page == "survey_questions":
                         help=q_data.get("help", ""),
                         key=widget_key
                     )
-                # Store response using its key_suffix
-                st.session_state.survey_data_collected[key_suffix] = response
+                # Store response using its key_suffix for interactive elements
+                if key_suffix: # Only store if key_suffix is defined for a response
+                    st.session_state.survey_data_collected[key_suffix] = response
             else:
                 # If question is not displayed, remove its response from session_state
-                if key_suffix in st.session_state.survey_data_collected:
+                if key_suffix and key_suffix in st.session_state.survey_data_collected:
                     del st.session_state.survey_data_collected[key_suffix]
 
 
@@ -280,10 +288,13 @@ elif st.session_state.page == "submission_review":
     display_feedback_text = ""
     # Iterate through the actual project to get question text and display responses
     # Only display questions that were actually rendered and answered
-    # Use st.session_state.survey_data_collected.keys() to get the keys of answered questions
     answered_question_keys_suffix = set(st.session_state.survey_data_collected.keys())
 
     for q_data in st.session_state.current_project:
+        # Skip markdown types in review as they don't have stored responses
+        if q_data["type"] == "markdown":
+            continue
+
         key_suffix = q_data["key_suffix"]
         question_text = q_data["text"]
         response_value = st.session_state.survey_data_collected.get(key_suffix)
