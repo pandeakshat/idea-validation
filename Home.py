@@ -164,7 +164,6 @@ elif st.session_state.page == "survey_questions":
 
     # Render questions dynamically
     for section_title, questions in questions_by_section.items():
-        st.subheader(section_title)
         for q_data in questions:
             question_id = q_data["id"]
             question_text = q_data["text"]
