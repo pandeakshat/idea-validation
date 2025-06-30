@@ -98,43 +98,79 @@ if st.session_state.page == "code_input":
             st.error("Invalid project code. Try again.")
 
 elif st.session_state.page == "survey_questions":
-    st.header(f"Survey: {st.session_state.project_name_current}")
-    grouped = {}
+    st.header(f"Survey for: **{st.session_state.project_name_current}**")
+    st.markdown("Your input is incredibly valuable to help us refine this project.")
+    st.markdown("---")
+
+    questions_by_section = {}
     for q in st.session_state.current_project:
-        grouped.setdefault(q.get("section", "General"), []).append(q)
+        section = q.get("section", "General")
+        questions_by_section.setdefault(section, []).append(q)
 
-    for section, questions in grouped.items():
-        st.subheader(section)
-        for q in questions:
-            qid = q["id"]
-            qtype = q["type"]
-            text = q["text"]
-            key = q.get("key_suffix", qid)
+    for section_title, questions in questions_by_section.items():
+        with st.expander(section_title, expanded=True):
+            for q_data in questions:
+                q_type = q_data.get("type")
+                question_text = q_data.get("text")
+                key_suffix = q_data.get("key_suffix")
+                widget_key = f"{q_data['id']}_{key_suffix}" if key_suffix else q_data['id']
 
-            default = q.get("default_value", "")
-            options = q.get("options", [])
+                condition = q_data.get("condition")
+                show = True
+                if condition:
+                    ref = st.session_state.survey_data_collected.get(condition["depends_on"])
+                    if condition["type"] == "equals" and ref != condition["value"]:
+                        show = False
+                    elif condition["type"] == "in" and ref not in condition["value"]:
+                        show = False
+                    elif condition["type"] == "any_value" and (ref is None or ref in ["", "Select one"]):
+                        show = False
 
-            if qtype == "radio" and options:
-                index = options.index(default) if default in options else 0
-                response = st.radio(text, options, index=index, key=qid)
-            elif qtype == "selectbox" and options:
-                index = options.index(default) if default in options else 0
-                response = st.selectbox(text, options, index=index, key=qid)
-            elif qtype == "slider":
-                response = st.slider(
-                    text,
-                    min_value=q.get("min_value", 0),
-                    max_value=q.get("max_value", 10),
-                    value=default,
-                    key=qid
-                )
-            elif qtype == "text_area":
-                response = st.text_area(text, value=default, key=qid)
-            else:
-                response = st.text_input(text, value=default, key=qid)
+                if not show:
+                    st.session_state.survey_data_collected.pop(key_suffix, None)
+                    continue
 
-            st.session_state.survey_data_collected[key] = response
+                if q_type == "markdown":
+                    st.markdown(question_text, unsafe_allow_html=True)
+                    continue
 
+                current_value = st.session_state.survey_data_collected.get(key_suffix, q_data.get("default_value"))
+
+                if q_type == "radio":
+                    response = st.radio(
+                        question_text,
+                        options=q_data["options"],
+                        index=q_data["options"].index(current_value) if current_value in q_data["options"] else 0,
+                        key=widget_key
+                    )
+                elif q_type == "text_area":
+                    response = st.text_area(
+                        question_text,
+                        placeholder=q_data.get("placeholder", ""),
+                        value=current_value,
+                        key=widget_key
+                    )
+                elif q_type == "selectbox":
+                    response = st.selectbox(
+                        question_text,
+                        options=q_data["options"],
+                        index=q_data["options"].index(current_value) if current_value in q_data["options"] else 0,
+                        key=widget_key
+                    )
+                elif q_type == "slider":
+                    response = st.slider(
+                        question_text,
+                        min_value=q_data.get("min_value", 0),
+                        max_value=q_data.get("max_value", 10),
+                        value=current_value,
+                        help=q_data.get("help", ""),
+                        key=widget_key
+                    )
+                else:
+                    continue
+
+                if key_suffix:
+                    st.session_state.survey_data_collected[key_suffix] = response
     if st.button("Review & Submit"):
         st.session_state.page = "submission_review"
         st.rerun()
