@@ -71,7 +71,8 @@ st.session_state.setdefault("survey_data_collected", {})
 
 VALID_PROJECT_CODES = {
     "FIT101": {"name": "Fit-Base Validation", "module": "fitbase", "db_alias": "supabase_db", "table_name": "fitbase"},
-    "CUSTOMER202": {"name": "Customer Analytics", "module": "customerdashboard", "db_alias": "supabase_db", "table_name": "customerdashboard"}
+    "CUSTOMER202": {"name": "Customer Analytics", "module": "customerdashboard", "db_alias": "supabase_db", "table_name": "customerdashboard"},
+    "FLOW401": {"name": "Project Flow Platform", "module": "projectflow", "db_alias": "supabase_db", "table_name": "projectflow"},
 }
 
 if st.session_state.page == "code_input":
