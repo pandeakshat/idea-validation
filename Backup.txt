@@ -1,0 +1,4 @@
+    "FIT101": {"name": "Fit-Base Validation", "module": "fitbase", "db_alias": "supabase_db", "table_name": "fitbase"},
+    "CUSTOMER202": {"name": "Customer Analytics Dashboard", "module": "customerdashboard", "db_alias": "supabase_db", "table_name": "customerdashboard"},
+    "NFT301": {"name": "NFT Marketplace Insights", "module": "nftmarketplace", "db_alias": "supabase_db", "table_name": "nftmarketplace"},
+    "FLOW401": {"name": "Project Flow Platform", "module": "projectflow", "db_alias": "supabase_db", "table_name": "projectflow"},
